@@ -152,7 +152,9 @@ def check_and_send(address):
 
     address_info = ForwardAddress.query.filter_by(address=address).first()
     if address_info:
-        estimate_fee = util.calculate_fee(num_inputs=len(address_unspent),num_outputs=len(address_info.outputs), kb_tx_fee=TX_FEE_PER_KB)
+        estimate_fee = util.calculate_fee(num_inputs=len(address_unspent),
+                                          num_outputs=len(address_info.outputs),
+                                          kb_tx_fee=TX_FEE_PER_KB)
         unspent_value = sum(output.get('value') for output in address_unspent)
         spendable_value = unspent_value - estimate_fee
         if spendable_value <= 0:
@@ -218,7 +220,7 @@ def check_and_send(address):
             return {'status': 'success',
                     'data': {
                         'message': '<strong>Success!</strong> Your transaction was received and forwarded to your selected relays. '
-                                    '<a target="_blank" href="https://blockchain.info/tx/'+tx_hash+'">'+tx_hash[0:10]+'..</a>',
+                        '<a target="_blank" href="https://blockchain.info/tx/'+tx_hash+'">'+tx_hash[0:10]+'..</a>',
                         'tx_hash': tx_hash
                     }}
         except Exception, err:
