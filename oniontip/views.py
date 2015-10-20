@@ -12,15 +12,18 @@ import json
 import qrcode
 import StringIO
 import math
-import bitcoin # pybitcointools
+import bitcoin  # pybitcointools
 import datetime
 
-TX_FEE_PER_KB = 10000   # 
+TX_FEE_PER_KB = 10000   #
 MIN_OUTPUT = 5460       # Bitcoin dust limit
+
 
 @app.route('/')
 def index():
-    return render_template('home.html', script_root=request.script_root, total_donated=total_donated())
+    return render_template('home.html', script_root=request.script_root,
+                           total_donated=total_donated())
+
 
 @app.route('/transactions')
 def previous_transactions():
@@ -37,7 +40,8 @@ def previous_transactions():
                 'value': payment.donation_amount,
                 'value_formatted': util.format_bitcoin_value(payment.donation_amount)
             })
-    return render_template('transactions.html', script_root=request.script_root, total_donated=total_donated(), transactions=transactions)
+    return render_template('transactions.html', script_root=request.script_root,
+                           total_donated=total_donated(), transactions=transactions)
 
 
 @app.route('/result.json', methods=['GET'])
@@ -45,6 +49,7 @@ def json_result():
     options = util.Opt(dict(request.args.items()))
     relays = util.determine_relays(options)
     return Response(json.dumps(relays, cls=util.ResultEncoder), mimetype='application/json')
+
 
 @app.route('/payment.json', methods=['GET'])
 def payment_info():
@@ -61,7 +66,7 @@ def payment_info():
             outputs[relay.bitcoin_address] += relay.donation_share
         else:
             outputs[relay.bitcoin_address] = relay.donation_share
-            
+
     if outputs:
         '''
         Retrieve last id and provide it when creating next privkey from seed.
@@ -74,17 +79,22 @@ def payment_info():
         db.session.add(donation_request)
         db.session.commit()
 
-        app.logger.info('Forwarding adddress {} paying to {} relays created.'.format(donation_request.address, len(outputs)))
+        app.logger.info('Forwarding adddress %s paying to %s relays created.',
+                        donation_request.address, len(outputs))
+
         return Response(json.dumps({
-                'status': 'success',
-                'data': {
-                    'message': 'A new bitcoin address forwarding to the {} selected relays has been created'.format(len(outputs)), 
-                    'bitcoin_address': donation_request.address,
-                    'num_unique_addresses': len(outputs)
-            }}), mimetype='application/json'), 201
+                        'status': 'success',
+                        'data': {
+                            'message': 'A new bitcoin address forwarding to the {} selected relays has been created'.format(len(outputs)),
+                            'bitcoin_address': donation_request.address,
+                            'num_unique_addresses': len(outputs)
+                        }}), mimetype='application/json'), 201
 
     else:
-        return Response(json.dumps({'status': 'We could not find any relays which meet your criteria'}), mimetype='application/json'), 400
+        return Response(json.dumps({
+            'status': 'We could not find any relays which meet your criteria'}
+        ), mimetype='application/json'), 400
+
 
 @app.route('/qr/<address>')
 def get_qrcode(address):
@@ -106,6 +116,7 @@ def get_qrcode(address):
     img_io.seek(0)
 
     return send_file(img_io, mimetype='image/png')
+
 
 def check_and_send(address):
     '''
@@ -134,7 +145,7 @@ def check_and_send(address):
     if address_history and not address_unspent:
         app.logger.info('Could not find any unspent outputs for address {}, outputs already spent'.format(address))
         return {'status': 'fail',
-                'data': { 
+                'data': {
                     'message': 'There are no bitcoins remaining at this address. Have they been forwarded already? <a target="_blank" href="https://blockchain.info/address/'+address+'">'+address[0:10]+'..</a>',
                     'code': 404
                 }}
@@ -143,7 +154,7 @@ def check_and_send(address):
     if address_info:
         estimate_fee = util.calculate_fee(num_inputs=len(address_unspent),num_outputs=len(address_info.outputs), kb_tx_fee=TX_FEE_PER_KB)
         unspent_value = sum(output.get('value') for output in address_unspent)
-        spendable_value = unspent_value - estimate_fee 
+        spendable_value = unspent_value - estimate_fee
         if spendable_value <= 0:
             app.logger.warn('Not enough unspent bitcoin at address {} to pay tx fee of {} satoshi. '.format(address, estimate_fee))
             return {'status': 'fail',
@@ -151,10 +162,11 @@ def check_and_send(address):
                         'message': 'There is not enough unspent bitcoin at this address to pay the transaction fee of {} satoshis.'.format(estimate_fee),
                         'code': 500
                     }}
-        
+
         outs = []
         discarded_value = 0
-        # Create the outputs, if any are too small, remove them and add them to remaining as can only get bigger
+        # Create the outputs, if any are too small, remove them and add them to remaining as can
+        # only get bigger
         for address, donation_percent in address_info.outputs.iteritems():
             value = int(math.floor((donation_percent * 0.01) * spendable_value))
             if value >= MIN_OUTPUT:
@@ -188,7 +200,7 @@ def check_and_send(address):
                 push_result = bitcoin.blockr_pushtx(tx)
             tx_total = sum(out.get('value') for out in outs)
 
-            # This address has been successfully spent from, update tx info and don't check it again.
+            # This address has been successfully spent from, update tx info and don't check it again
             address_info.spent = True
             address_info.spending_tx = tx_hash
             address_info.donation_amount = tx_total
@@ -229,19 +241,21 @@ def check_and_send(address):
                     'code': 404
                     }}
 
+
 def find_unsent_payments(check_all=False):
     """
     Forward unspent transactions sent to oniontip addresses
 
     This function is called from the CLI to recheck recent
     addresses (< 2 hours) for any payments which the user
-    may not have forwarded on the web UI. 
+    may not have forwarded on the web UI.
     """
 
     unspent_addresses = ForwardAddress.query.filter_by(spent=False).all()
     successful_txs = []
     for unspent in unspent_addresses:
-        if ((datetime.datetime.utcnow() - unspent.created) < datetime.timedelta(hours=3)) or check_all:
+        if ((datetime.datetime.utcnow() - unspent.created) < datetime.timedelta(hours=3))
+        or check_all:
             response = check_and_send(unspent.address)
             if response.get('status') == 'success':
                 app.logger.info('Transaction successfully sent from CLI from {} in tx {}.'.format(unspent.address, response['data']['tx_hash']))
@@ -256,6 +270,7 @@ def find_unsent_payments(check_all=False):
             else:
                 app.logger.error('An unknown error occured in the application.')
     return successful_txs
+
 
 @app.route('/forward/<address>')
 def forward_from_address(address):
@@ -273,7 +288,9 @@ def forward_from_address(address):
             response_code = 500
         return Response(json.dumps(response), mimetype='application/json'), response_code
     else:
-        return Response(json.dumps({'message': 'An unknown error occured in the application.'}), mimetype='application/json'), 500
+        return Response(json.dumps({'message': 'An unknown error occured in the application.'}),
+                        mimetype='application/json'), 500
+
 
 def total_donated():
     total_donated = DataStore.query.filter_by(key='total_donated').first()
