@@ -210,8 +210,8 @@ class RunningFilter(BaseFilter):
 class ValidWeightFilter(BaseFilter):
     def accept(self, relay):
         if (relay.get('consensus_weight_fraction', -1) >= 0.0
-          and relay.get('guard_probability', -1) >= 0.0
-          and relay.get('exit_probability', -1) >= 0.0):
+            and relay.get('guard_probability', -1) >= 0.0
+                and relay.get('exit_probability', -1) >= 0.0):
             return True
         else:
             return False
