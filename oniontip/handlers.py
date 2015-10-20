@@ -12,7 +12,6 @@ class TlsSMTPHandler(SMTPHandler):
         """
         try:
             import smtplib
-            import string # for tls add this line
             try:
                 from email.utils import formatdate
             except ImportError:
@@ -23,14 +22,14 @@ class TlsSMTPHandler(SMTPHandler):
             smtp = smtplib.SMTP(self.mailhost, port)
             msg = self.format(record)
             msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\n\r\n%s" % (
-                            self.fromaddr,
-                            string.join(self.toaddrs, ","),
-                            self.getSubject(record),
-                            formatdate(), msg)
+                self.fromaddr,
+                ",".join(self.toaddrs, ","),
+                self.getSubject(record),
+                formatdate(), msg)
             if self.username:
-                smtp.ehlo() # for tls add this line
-                smtp.starttls() # for tls add this line
-                smtp.ehlo() # for tls add this line
+                smtp.ehlo()  # for tls add this line
+                smtp.starttls()  # for tls add this line
+                smtp.ehlo()  # for tls add this line
                 smtp.login(self.username, self.password)
             smtp.sendmail(self.fromaddr, self.toaddrs, msg)
             smtp.quit()
