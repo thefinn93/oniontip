@@ -3,8 +3,9 @@ from flask import current_app
 import bitcoin
 import datetime
 
+
 class ForwardAddress(db.Model):
-    __table_args__ = {'sqlite_autoincrement': True} # Make sure id's aren't reused
+    __table_args__ = {'sqlite_autoincrement': True}  # Make sure id's aren't reused
 
     id = db.Column(db.Integer, primary_key=True)
     private_key = db.Column(db.String(80), unique=True)
@@ -18,7 +19,8 @@ class ForwardAddress(db.Model):
 
     def __init__(self, private_key=None, outputs=None, previous_n=0):
         if not private_key:
-            self.private_key = bitcoin.electrum_privkey(current_app.config.get('BITCOIN_KEY_SEED'), previous_n+1)
+            self.private_key = bitcoin.electrum_privkey(current_app.config.get('BITCOIN_KEY_SEED'),
+                                                        previous_n+1)
         else:
             self.private_key = private_key
         self.public_key = bitcoin.privtopub(self.private_key)
@@ -28,6 +30,7 @@ class ForwardAddress(db.Model):
 
     def __unicode__(self):
         return self.address
+
 
 class DataStore(db.Model):
     """Simple Key/value data store instead of using flat file"""
