@@ -23,7 +23,7 @@ class TlsSMTPHandler(SMTPHandler):
             msg = self.format(record)
             msg = "From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\n\r\n%s" % (
                 self.fromaddr,
-                ",".join(self.toaddrs, ","),
+                ",".join(self.toaddrs),
                 self.getSubject(record),
                 formatdate(), msg)
             if self.username:
