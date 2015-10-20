@@ -15,7 +15,7 @@ if not app.debug:
         credentials = (app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
     mail_handler = TlsSMTPHandler(
         (app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
-        app.config['MAIL_EMAIL'] ,app.config['ADMINS'],
+        app.config['MAIL_EMAIL'], app.config['ADMINS'],
         'OnionTip Failure', credentials
     )
     mail_handler.setLevel(logging.ERROR)
@@ -23,7 +23,8 @@ if not app.debug:
 
     from logging.handlers import RotatingFileHandler
     file_handler = RotatingFileHandler(app.config['LOGGER_NAME'], 'a', 1 * 1024 * 1024, 10)
-    file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+    file_handler.setFormatter(
+        logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
     app.logger.setLevel(logging.INFO)
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
