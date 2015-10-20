@@ -256,8 +256,7 @@ def find_unsent_payments(check_all=False):
     unspent_addresses = ForwardAddress.query.filter_by(spent=False).all()
     successful_txs = []
     for unspent in unspent_addresses:
-        if ((datetime.datetime.utcnow() - unspent.created) < datetime.timedelta(hours=3))
-        or check_all:
+        if ((datetime.datetime.utcnow() - unspent.created) < datetime.timedelta(hours=3)) or check_all:
             response = check_and_send(unspent.address)
             if response.get('status') == 'success':
                 app.logger.info('Transaction successfully sent from CLI from {} in tx {}.'.format(unspent.address, response['data']['tx_hash']))

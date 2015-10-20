@@ -148,7 +148,7 @@ class ResultEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Result):
             return obj.__dict__
-    return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 def extract_bitcoin_address(field):
